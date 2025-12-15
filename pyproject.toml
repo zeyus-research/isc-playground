@@ -6,11 +6,18 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "matplotlib>=3.10.0",
+    "mne>=1.11.0",
     "mpld3>=0.5.10",
     "networkx>=3.4.2",
     "numpy>=2.2.2",
+    "pandas-stubs>=2.3.3.251201",
     "pyarrow>=19.0.0",
+    "rqa-analysis",
     "scipy>=1.15.1",
     "seaborn>=0.13.2",
     "streamlit>=1.42.0",
+    "watchdog>=6.0.0",
 ]
+
+[tool.uv.sources]
+rqa-analysis = { git = "https://github.com/xkiwilabs/Recurrence-Quantification-Analysis.git" }

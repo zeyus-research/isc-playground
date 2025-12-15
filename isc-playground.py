@@ -15,7 +15,7 @@ plt.style.use("dark_background")
 
 st.title("ISC Playground")
 st.link_button("Source code", "https://github.com/zeyus/isc-playground", icon="💻")
-st.subheader("Updated 2025-02-10 16:10")
+st.subheader("Updated 2025-02-10 21:41")
 st.divider()
 
 config_defaults = {
@@ -511,7 +511,10 @@ def apply_cca(X, W, fs):
     window_i = 0
 
     for t in range(0, T, fs):
-        Xt = X[:, t : t + window_sec * fs]
+        t_end = min(t + window_sec * fs, T)
+        if t_end - t < 1:
+            break
+        Xt = X[:, t : t_end]
         Rij = np.cov(Xt)
         Rw = np.mean([Rij[i : i + D, i : i + D] for i in range(0, D * N, D)], axis=0)
         Rb = np.mean(
@@ -832,14 +835,14 @@ def plot_isc(isc_all):
     r1 = np.arange(len(comp1))
     r2 = [x + barWidth for x in r1]
     r3 = [x + barWidth for x in r2]
-    plt.bar(r1, comp1, color="gray", width=barWidth, edgecolor="white", label="Comp1")
+    plt.bar(r1, comp1, color="red", width=barWidth, edgecolor="white", label="Comp1")
     if n_comp > 1:
         plt.bar(
-            r2, comp2, color="green", width=barWidth, edgecolor="white", label="Comp2"
+            r2, comp2, color="purple", width=barWidth, edgecolor="white", label="Comp2"
         )
     if n_comp > 2:
         plt.bar(
-            r3, comp3, color="green", width=barWidth, edgecolor="white", label="Comp3"
+            r3, comp3, color="blue", width=barWidth, edgecolor="white", label="Comp3"
         )
     plt.xticks([r + barWidth for r in range(len(comp1))], isc_all.keys())
     plt.ylabel("ISC", fontweight="bold")
@@ -860,11 +863,49 @@ def plot_isc_time(isc_all):
         for comp_i in range(0, min(n_comp, 3)):
             plt.subplot(3, 1, comp_i + 1)
             plt.title(f"Component {comp_i + 1}", loc="right")
-            plt.plot(cond["ISC_persecond"][comp_i])
-            # plt.legend(isc_all.keys())
-            plt.xlabel("Time (s)")
-            plt.ylabel("ISC")
+            plt.plot(cond["ISC_persecond"][comp_i], marker="o", linestyle="-", markersize=3)
+            plt.ylim(0, 1)
     plt.tight_layout()
+    # add space at left and bottom
+    plot.subplots_adjust(left=0.12, bottom=0.12)
+
+    # make a shared x-axis
+    plot.text(0.5, 0.04, "Time (s)", ha="center")
+
+    # and a shared y-axis
+    plot.text(0.04, 0.5, "ISC", va="center", rotation="vertical")
+
+    # add a single legend for all subplots
+    plt.figlegend(isc_all.keys(), loc="upper left")
+
+
+    return plot
+
+@st.cache_resource
+def plot_isc_subj(isc_all):
+    plot = plt.figure()
+    # plot ISC_bysubject
+    n_comp = len(isc_all[list(isc_all.keys())[0]]["ISC"])
+    for cond in isc_all.values():
+        for comp_i in range(0, min(n_comp, 3)):
+            plt.subplot(3, 1, comp_i + 1)
+            plt.grid(visible=True, which="both", axis="y")
+            plt.title(f"Component {comp_i + 1}", loc="right")
+            plt.plot(cond["ISC_bysubject"][comp_i], marker="o", linestyle="")
+            plt.ylim(0, 1)
+    plt.tight_layout()
+    # add space at left and bottom
+    plot.subplots_adjust(left=0.12, bottom=0.12)
+
+    # make a shared x-axis
+    plot.text(0.5, 0.04, "Subject", ha="center")
+    # and a shared y-axis
+    plot.text(0.04, 0.5, "ISC", va="center", rotation="vertical")
+
+    # add a single legend for all subplots
+    plt.figlegend(isc_all.keys(), loc="upper left")
+
+    
     return plot
 
 
@@ -874,6 +915,10 @@ def plot_weights(W):
     fig, ax = plt.subplots(1, 1, figsize=(5, 5))
     sns.heatmap(W, ax=ax)
     ax.set_title("Spatial filter weights")
+    # add x and y labels
+    ax.set_xlabel("Component")
+    ax.set_ylabel("Channel")
+    
     return fig
 
 
@@ -905,8 +950,8 @@ if data is not None:
         # show the ISC values as a table for each component
         df = {f"C{i + 1}": [v] for i, v in enumerate(st.session_state.ISC_overall)}
         st.dataframe(df)
-        filter_weight_tab, isc_summary_tab, isc_time_tab = st.tabs(
-            ["Filter weights", "ISC summary", "ISC over time"]
+        filter_weight_tab, isc_summary_tab, isc_time_tab, subject_tab = st.tabs(
+            ["Filter weights", "ISC summary", "ISC over time", "ISC by subject"]
         )
         with filter_weight_tab:
             # plot spatial filter weights
@@ -943,4 +988,9 @@ if data is not None:
         with isc_time_tab:
             # plot ISC over time
             fig = plot_isc_time(st.session_state.isc_results)
+            st.pyplot(fig)
+        
+        with subject_tab:
+            # plot ISC by subject
+            fig = plot_isc_subj(st.session_state.isc_results)
             st.pyplot(fig)
