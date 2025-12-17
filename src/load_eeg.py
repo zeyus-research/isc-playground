@@ -10,6 +10,16 @@ and consists of 2 recordings per subject:
 import matplotlib.pyplot as plt
 import mne  # type: ignore
 
+import io
+from copy import copy
+from collections import OrderedDict
+
+import numpy as np
+import scipy
+
+
+
+
 def load_eeg(subject_id: int, stimulus: str) -> mne.io.Raw:
     """Load EEG data for a given subject and stimulus.
 
