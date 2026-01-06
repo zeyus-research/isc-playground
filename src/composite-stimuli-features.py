@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from matplotlib import pyplot as plt
+from argparse import ArgumentParser
 
 def load_and_interpolate_to_reference(
     file_path: Path, 
@@ -22,9 +23,7 @@ def load_and_interpolate_to_reference(
     return result
 
 
-def main():
-    data_dir = Path("./stimuli")
-    out_dir = Path("./out")
+def main(data_dir: Path, out_dir: Path):
     out_dir.mkdir(exist_ok=True)
     
     stimuli = {
@@ -105,4 +104,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = ArgumentParser(description="Composite Stimuli Features")
+    parser.add_argument("--data_dir", type=Path, required=True, help="Directory containing input files")
+    parser.add_argument("--out_dir", type=Path, required=False, help="Directory to save output files", default="./out")
+    args = parser.parse_args()
+
